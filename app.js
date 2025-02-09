@@ -3,6 +3,7 @@ const express = require('express');
 const https = require('https');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const dotEnv = require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -36,20 +37,24 @@ app.post('/', (req, res) => {
   const jsonData = JSON.stringify(data);
 
   const url = 'https://us10.api.mailchimp.com/3.0/lists/0ad809e044';
+
   const apiKey = process.env.MAILCHIMP_API_KEY;
+  console.log('API Key:', apiKey);
 
   const options = {
     method: 'POST',
     headers: {
-      Authorization: `apikey ${apiKey}`,
+      Authorization: `Basic ${Buffer.from('anystring:' + apiKey).toString(
+        'base64'
+      )}`,
       'Content-Type': 'application/json',
     },
   };
 
-  const request = https.request(url, options, response => {
-    const status = 200;
+  console.log('Headers:', options.headers);
 
-    if (response.statusCode === status) {
+  const request = https.request(url, options, response => {
+    if (response.statusCode === 200) {
       res.sendFile(__dirname + '/success.html');
     } else {
       res.sendFile(__dirname + '/failure.html');
