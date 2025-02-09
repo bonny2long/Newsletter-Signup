@@ -3,8 +3,10 @@ const express = require('express');
 const https = require('https');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const port = 8000;
+
 const app = express();
+const port = process.env.PORT || 8000;
+
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -34,11 +36,12 @@ app.post('/', (req, res) => {
   const jsonData = JSON.stringify(data);
 
   const url = 'https://us10.api.mailchimp.com/3.0/lists/0ad809e044';
+  const apiKey = process.env.MAILCHIMP_API_KEY;
 
   const options = {
     method: 'POST',
     headers: {
-      Authorization: 'apikey a8c0cce9879df60ab12a38ec9e13ef7b-us10',
+      Authorization: `apikey ${apiKey}`,
       'Content-Type': 'application/json',
     },
   };
@@ -64,12 +67,6 @@ app.post('/failure', (req, res) => {
   res.redirect('/');
 });
 
-app.listen(process.env.PORT || port, () => {
-  console.log(`server is running on ${port}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
-
-//API KEY
-// a8c0cce9879df60ab12a38ec9e13ef7b - us10;
-
-//List ID
-// 0ad809e044
