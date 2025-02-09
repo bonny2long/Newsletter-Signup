@@ -1,3 +1,16 @@
+'use strict';
+const express = require('express');
+const https = require('https');
+const bodyParser = require('body-parser');
+const axios = require('axios');
+const dotEnv = require('dotenv').config();
+
+const app = express();
+const port = process.env.PORT || 8000;
+
+app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/signup.html');
 });
@@ -6,6 +19,7 @@ app.post('/', (req, res) => {
   const firstName = req.body.fName;
   const lastName = req.body.lName;
   const Email = req.body.email;
+  console.log(firstName, lastName, Email);
 
   const data = {
     members: [
