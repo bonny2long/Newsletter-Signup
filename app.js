@@ -2,20 +2,20 @@
 const express = require('express');
 const https = require('https');
 const bodyParser = require('body-parser');
-const path = require('path'); // Importing path module for resolving file paths
-const axios = require('axios');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 8000;
 
-app.use(express.static(path.join(__dirname, 'public'))); // Corrected path handling for static files
-app.use('/public', express.static(path.join(__dirname, 'public'))); // Static files route
-
+// Middleware order is important: static files first
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'signup.html')); // Corrected path to serve signup.html
+  res.sendFile(path.join(__dirname, 'public', 'signup.html'), {
+    headers: { 'Content-Type': 'text/html' },
+  });
 });
 
 app.post('/', (req, res) => {
@@ -44,8 +44,9 @@ app.post('/', (req, res) => {
   const apiKey = process.env.MAILCHIMP_API_KEY;
   if (!apiKey) {
     console.error('Mailchimp API Key is missing!');
-    res.sendFile(path.join(__dirname, 'public', 'failure.html')); // Handle missing API Key
-    return;
+    return res.sendFile(path.join(__dirname, 'public', 'failure.html'), {
+      headers: { 'Content-Type': 'text/html' },
+    });
   }
 
   console.log('API Key:', apiKey);
@@ -68,25 +69,44 @@ app.post('/', (req, res) => {
     });
 
     response.on('end', () => {
+      let parsedData = null;
+
       try {
-        const parsedData = JSON.parse(data);
+        parsedData = JSON.parse(data);
         console.log('Mailchimp API Response:', parsedData);
       } catch (error) {
-        console.error('Error parsing Mailchimp response:', error);
+        console.error(
+          'Error parsing Mailchimp response:',
+          error,
+          'Raw Response:',
+          data
+        );
       }
 
       if (response.statusCode === 200) {
-        res.sendFile(path.join(__dirname, 'public', 'success.html')); // Serve success page
+        res.sendFile(path.join(__dirname, 'public', 'success.html'), {
+          headers: { 'Content-Type': 'text/html' },
+        });
       } else {
-        console.error('Failed to subscribe:', parsedData); // Log failure response
-        res.sendFile(path.join(__dirname, 'public', 'failure.html')); // Serve failure page
+        console.error(
+          'Failed to subscribe:',
+          parsedData
+            ? parsedData
+            : 'Mailchimp Response parsing failed. Raw Response:',
+          data
+        );
+        res.sendFile(path.join(__dirname, 'public', 'failure.html'), {
+          headers: { 'Content-Type': 'text/html' },
+        });
       }
     });
   });
 
   request.on('error', err => {
-    console.error('API Request Error:', err);
-    res.sendFile(path.join(__dirname, 'public', 'failure.html')); // Handle API request errors
+    console.error('API Request Error:', err); // Log the full error object
+    res.sendFile(path.join(__dirname, 'public', 'failure.html'), {
+      headers: { 'Content-Type': 'text/html' },
+    });
   });
 
   request.write(jsonData);
